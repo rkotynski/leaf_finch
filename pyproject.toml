@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leaf-finch"
+version = "1.0.0"
+description = "Learned binary-amplitude DMD mask design for Fresnel incoherent correlation holography"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  {name = "Vijayakumar Anand"},
+  {name = "Rafał Stojek"},
+  {name = "Rafał Kotyński"},
+]
+keywords = [
+  "digital micromirror device",
+  "DMD",
+  "FINCH",
+  "computational holography",
+  "Rayleigh-Sommerfeld diffraction",
+  "inverse design",
+  "PyTorch",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "matplotlib>=3.8",
+  "PyQt5>=5.15",
+  "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "build>=1.2",
+]
+
+[project.scripts]
+leaf-finch = "leaf_finch.cli:main"
+leaf-finch-gui = "leaf_finch.gui.main_window:main"
+
+[tool.setuptools.packages.find]
+include = ["leaf_finch*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

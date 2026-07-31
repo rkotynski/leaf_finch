@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an improvement to LEAF_FINCH
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: Motivation
+      description: What scientific or practical problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired interface and expected result.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Physical or numerical considerations
+      description: Include equations, references, constraints, or performance implications when relevant.

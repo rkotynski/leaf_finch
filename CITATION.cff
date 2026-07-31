@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: >-
+  If you use LEAF_FINCH in research, please cite the accompanying manuscript.
+  The manuscript is not yet published, so its bibliographic details may change.
+title: LEAF_FINCH
+version: 1.0.0
+date-released: 2026-07-31
+license: MIT
+authors:
+  - family-names: Anand
+    given-names: Vijayakumar
+  - family-names: Stojek
+    given-names: Rafał
+  - family-names: Kotyński
+    given-names: Rafał
+preferred-citation:
+  type: article
+  title: Learned binary amplitude mask designs for Fresnel incoherent correlation holography
+  authors:
+    - family-names: Anand
+      given-names: Vijayakumar
+    - family-names: Stojek
+      given-names: Rafał
+    - family-names: Kotyński
+      given-names: Rafał
+  journal: Optics Letters
+  year: 2026
+  notes: >-
+    Manuscript submitted to Optics Letters; provisionaly accepted. Bibliographic details
+    may change.

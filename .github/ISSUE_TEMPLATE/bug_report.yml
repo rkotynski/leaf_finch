@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible problem in LEAF_FINCH
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: Problem
+      description: Describe what happened and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction steps
+      description: Include configuration values or a minimal JSON file when possible.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: LEAF_FINCH version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: OS, Python, PyTorch, CPU/GPU model, CUDA or ROCm version, and PyQt5 version.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs or traceback
+      render: shell

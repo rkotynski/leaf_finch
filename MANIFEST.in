@@ -1,0 +1,8 @@
+include LICENSE
+include CITATION.cff
+include CITATION.bib
+include AUTHORS.md
+include CONTRIBUTING.md
+include SECURITY.md
+recursive-include examples *.json
+recursive-include docs *.pdf *.tex *.md *.png

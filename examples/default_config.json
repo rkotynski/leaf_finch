@@ -1,0 +1,74 @@
+{
+  "backend": {
+    "device": "auto",
+    "auto_batch": true,
+    "memory_fraction": 0.65,
+    "reserve_memory_mb": 512,
+    "min_pixel_chunk": 256,
+    "max_pixel_chunk": 262144,
+    "cpu_max_pixel_chunk": 16384
+  },
+  "dmd": {
+    "nx": 1024,
+    "ny": 768,
+    "pitch": 1.368e-05,
+    "wavelength": 5.32e-07,
+    "aperture_sides": 12,
+    "use_aperture": true
+  },
+  "plane_angles": {
+    "L": 0.275,
+    "theta_x_deg": 15.0,
+    "theta_y_deg": 16.4,
+    "theta_ring_deg": 0.15
+  },
+  "incident": {
+    "wavefront_radius_zi": 1000.0
+  },
+  "optimization": {
+    "n_patterns": 3,
+    "n_steps": 1000,
+    "points_per_step": 2048,
+    "pixel_chunk": null,
+    "lr": 0.05,
+    "temperature_start": 1.0,
+    "temperature_end": 0.08,
+    "binarization_weight": 0.0002,
+    "shape_weight": 1.0,
+    "mode_power_weight": 0.02,
+    "eps": 1e-30,
+    "seed": 1,
+    "dmd_pixel_jitter": false,
+    "jitter_fraction": 0.5,
+    "radial_sampling_f": 0.0,
+    "log_every": 25
+  },
+  "target": {
+    "target_type": "siemens",
+    "distance_to_focus": 0.025,
+    "edge_apodization_fraction": 0.15,
+    "edge_apodization_width": null,
+    "siemens_spokes": 36,
+    "siemens_rotation_step_deg": null,
+    "siemens_rotation_offset_deg": 0.0,
+    "siemens_low": 0.0,
+    "siemens_high": 1.0
+  },
+  "reconstruction": {
+    "enabled": true,
+    "distance": null,
+    "ring_radius": null,
+    "theta_ring_deg": 0.15,
+    "grid_size": 300,
+    "extent_factor": 1.25,
+    "point_chunk": null,
+    "pixel_chunk": null,
+    "max_cols": 4,
+    "fresnel_zr": 0.0125
+  },
+  "output": {
+    "base_dir": "results",
+    "save_convergence": true,
+    "save_reconstruction": true
+  }
+}
