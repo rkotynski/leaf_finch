@@ -27,7 +27,6 @@ The complete physical model, equations, algorithms, GUI workflow, configuration 
 
 ## Screenshots
 
-The repository includes prepared locations for four application screenshots. The current images are placeholders; replace the files in [`docs/assets/screenshots/`](docs/assets/screenshots/) with real screenshots while preserving their filenames.
 
 <table>
 <tr>
@@ -37,17 +36,21 @@ The repository includes prepared locations for four application screenshots. The
 </td>
 <td width="50%" align="center">
 <img src="docs/assets/screenshots/live_optimization.png" alt="LEAF_FINCH live optimization screenshot placeholder"><br>
-<em>Figure 2. Simulation tab: optimization progress, textual log, and live plots of the loss components.</em>
+<em>Figure 2. Simulation tab  showing optimization progress, the textual log, and the three-panel plot of the total loss and its components..</em>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
 <img src="docs/assets/screenshots/results_browser.png" alt="LEAF_FINCH results browser screenshot placeholder"><br>
-<em>Figure 3. Results tab: generated DMD masks, reconstructed fields, and saved output files.</em>
+<em>Figure 3. Generated binary masks encoding 3 phase-shifted DMD patterns.</em>
 </td>
 <td width="50%" align="center">
-<img src="docs/assets/screenshots/checkpoint_resume.png" alt="LEAF_FINCH checkpoint workflow screenshot placeholder"><br>
-<em>Figure 4. Checkpoint workflow: graceful stopping, model loading, exact continuation, and restart from saved weights.</em>
+<img src="docs/assets/screenshots/results_reconstructed.png" alt="LEAF_FINCH checkpoint workflow screenshot placeholder"><br>
+<em>Figure 4. Reconstructed field (intensity and phase obtained at a circular off-axis target area; the phase-shifted target image together encode a complex-valued FINCH hologram).</em>
+</td>
+<td width="50%" align="center">
+<img src="docs/assets/screenshots/finch_psf.png" alt="LEAF_FINCH checkpoint workflow screenshot placeholder"><br>
+<em>Figure 5. Reconstructed PSF of the complex FINCH hologram  (result of phase-shifted hologram reconstruction followed by Fresnel backpropagation).</em>
 </td>
 </tr>
 </table>
