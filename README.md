@@ -1,19 +1,18 @@
 # LEAF_FINCH
 
-**LEAF_FINCH** designs binary amplitude masks for a digital micromirror device (DMD) using differentiable Rayleigh-Sommerfeld propagation. The masks are optimized so that the complex field generated in an oblique observation plane has a strong projection onto a prescribed real-valued target field. The program includes a PyQt5 graphical interface, a command-line interface, CPU/CUDA/ROCm execution, automatic GPU-memory-aware chunk sizing, field reconstruction, convergence reports, and resumable checkpoints.
+**LEAF_FINCH** designs binary amplitude masks for a digital micromirror device (DMD) using differentiable Rayleigh-Sommerfeld propagation. The masks are optimized so that the complex field generated in an oblique observation plane has a strong projection onto a prescribed real-valued target field. Multiple phase-shifted patterns are optimized in parallel. The program includes a PyQt5 graphical interface, a command-line interface, CPU/CUDA/ROCm execution, automatic GPU-memory-aware chunk sizing, field reconstruction, convergence reports, and resumable checkpoints.
 
 Version: **1.0.0**
 
 ## Features
 
-- Nonparaxial point-to-point Rayleigh-Sommerfeld scalar propagation.
-- Circular optimization region in a plane with arbitrary direction.
+- Nonparaxial point-to-point Rayleigh-Sommerfeld scalar propagation between non-parallel planes.
+- Circular optimization region in a plane with arbitrary direction and radius.
 - Binary DMD masks trained with a straight-through estimator.
 - Cosine, spherical-wave, Siemens-star, and deterministic FZP targets. Cosine targets are used in the Opt. Lett. paper.
 - CPU, NVIDIA CUDA, and AMD ROCm support through PyTorch.
 - `torch.float32` real tensors and `torch.complex64` optical fields in performance-critical paths.
 - Automatic source-pixel and reconstruction chunk selection from available memory.
-- OOM recovery by reducing chunk sizes and retrying the failed operation.
 - Live loss plots, graceful stop after the current epoch, checkpoint save/load, and exact continuation of the local Adam state.
 - Pattern export to MATLAB, NumPy, PDF, and PNG formats.
 - Reconstruction and convergence output in MAT, CSV, JSON, PDF, PNG, and TXT formats.
@@ -55,7 +54,6 @@ The complete physical model, equations, algorithms, GUI workflow, configuration 
 </tr>
 </table>
 
-Screenshot replacement instructions are provided in [`docs/assets/screenshots/README.md`](docs/assets/screenshots/README.md).
 
 ## Installation
 
@@ -155,7 +153,7 @@ tests/                automated tests
 
 ## Citation
 
-The accompanying manuscript undergoes peer review in Optics Letters. The paper has been provisionaly accepted. Until final bibliographic data are available, cite it as:
+The accompanying manuscript has been provisionaly accepted for Optics Letters.  Until final bibliographic data are available, cite it as:
 
 > Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Optics Letters* (2026), (submitted).
 
