@@ -1,21 +1,34 @@
-# LEAF_FINCH
+# LEAF-FINCH (Learned Engineering of Amplitude Fields for Fresnel Incoherent Correlation Holography)
 
-**LEAF_FINCH** designs binary amplitude masks for a digital micromirror device (DMD) using differentiable Rayleigh-Sommerfeld propagation. The masks are optimized so that the complex field generated in an oblique observation plane has a strong projection onto a prescribed real-valued target field. Multiple phase-shifted patterns are optimized in parallel. The program includes a PyQt5 graphical interface, a command-line interface, CPU/CUDA/ROCm execution, automatic GPU-memory-aware chunk sizing, field reconstruction, convergence reports, and resumable checkpoints.
+**LEAF-FINCH** designs binary-amplitude masks for a digital micromirror device (DMD) using differentiable Rayleigh–Sommerfeld propagation. The masks are optimized such that the complex field generated in an oblique observation plane that is not parallel to the DMD has a strong projection onto a prescribed real-valued target field. Three or more phase-shifted patterns are optimized jointly.
+
+The program includes a PyQt5 graphical interface, a command-line interface, CPU/CUDA/ROCm execution, automatic GPU-memory-aware chunk sizing, field reconstruction, convergence reports, and resumable checkpoints.
 
 Version: **1.0.0**
 
 ## Features
 
 - Nonparaxial point-to-point Rayleigh-Sommerfeld scalar propagation between non-parallel planes.
-- Circular optimization region in a plane with arbitrary direction and radius.
+- Circular optimization target region in a plane with arbitrary direction and radius.
 - Binary DMD masks trained with a straight-through estimator.
-- Cosine, spherical-wave, Siemens-star, and deterministic FZP targets. Cosine targets are used in the Opt. Lett. paper.
+- Cosine, spherical-wave, Siemens-star, and deterministic Fresnel-Zone-Plate (FZP) targets. Cosine targets are used in the Opt. Lett. paper. FZP targets with Lee hologram encoding are included as a reference [V. Anand and R. Kotynski, “Experimental full-field Fresnel incoherent correlation holography using a digital micromirror device,” Appl. Opt. 65, 5479–5490 (2026)].
 - CPU, NVIDIA CUDA, and AMD ROCm support through PyTorch.
 - `torch.float32` real tensors and `torch.complex64` optical fields in performance-critical paths.
 - Automatic source-pixel and reconstruction chunk selection from available memory.
 - Live loss plots, graceful stop after the current epoch, checkpoint save/load, and exact continuation of the local Adam state.
 - Pattern export to MATLAB, NumPy, PDF, and PNG formats.
 - Reconstruction and convergence output in MAT, CSV, JSON, PDF, PNG, and TXT formats.
+
+## Relation to Lee holography and to superpixel methods
+
+- In this approach, the diffraction image is directly optimized at a selected angle and distance from the binary-amplitude spatial modulator (DMD). This differs from Lee holography, in which the amplitude hologram is encoded from an original complex field modulated by a linear Lee phase and then projected onto the coding domain. In Lee holography, spatial filtering in the Fourier domain is required to retain only the selected diffraction order. In the present case, spatial filtering may help select one of multiple diffraction orders; however, LEAF-FINCH may also be applied directly without spatial filtering.
+
+
+- In superpixel methods [S. Gopinath, A. Bleahu, T. Kahro, et al., “Enhanced Design of Multi-Plexed Coded Masks for Fresnel Incoherent Correlation Holography,” Sci. Rep. 13, 7390 (2023)], the amplitude hologram is obtained from a complex field, as in Lee holography, whereas in our approach it is optimized directly. Direct optimization is considerably more computationally demanding; however, it does not produce aberrations at larger observation angles and enables target fields to be optimized with high angular resolution near the DMD’s specular-reflection angle, where the diffraction efficiency is highest.
+ 
+
+- The Python code assumes that the distance from the DMD center to the target center ((L)), the curvatures of the interfering waves at the target—characterized by the distance to the focus, equal to (2z_r)—and the target radius are specified for a setup without additional lenses, particularly without magnification. These parameters may be affected by the presence of Fourier lenses and a spatial filter between the DMD and the observation target.
+
 
 ## Documentation
 
@@ -158,6 +171,14 @@ The accompanying manuscript has been provisionaly accepted for Optics Letters.  
 > Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Optics Letters* (2026), (submitted).
 
 A machine-readable citation is provided in [`CITATION.cff`](CITATION.cff), and a BibTeX entry is provided in [`CITATION.bib`](CITATION.bib).
+
+## Use of AI
+
+Parts of the code and its documentation were developed with the assistance of large language model (LLM) tools.
+
+## Acknowledgement
+
+Vijayakumar Anand acknowledges financial support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001) 
 
 ## License
 
