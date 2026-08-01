@@ -238,13 +238,21 @@ def save_reconstruction(
         axes[0].set_title("Complex hologram magnitude")
         axes[1].imshow(np.angle(hologram), origin="lower", extent=extent, cmap="twilight", vmin=-np.pi, vmax=np.pi)
         axes[1].set_title("Complex hologram phase")
+        for ax in axes:
+            ax.set_xlabel("u (mm)")
+            ax.set_ylabel("v (mm)")
         fig.tight_layout(); pdf.savefig(fig); plt.close(fig)
+        direction_names = {"plus": "forward", "minus": "backward"}
         for key, value in propagated.items():
+            direction = direction_names.get(key, key)
             fig, axes = plt.subplots(1, 2, figsize=(9, 4))
             axes[0].imshow(np.abs(value) ** 2, origin="lower", extent=extent, cmap="inferno")
-            axes[0].set_title(f"Fresnel {key}: intensity")
+            axes[0].set_title(f"Fresnel {direction} propagation (Intensity)")
             axes[1].imshow(np.angle(value), origin="lower", extent=extent, cmap="twilight", vmin=-np.pi, vmax=np.pi)
-            axes[1].set_title(f"Fresnel {key}: phase")
+            axes[1].set_title(f"Fresnel {direction} propagation (Phase)")
+            for ax in axes:
+                ax.set_xlabel("u (mm)")
+                ax.set_ylabel("v (mm)")
             fig.tight_layout(); pdf.savefig(fig); plt.close(fig)
     return {"mat": str(mat_path), "pdf": str(pdf_path), "png": str(png_path), "hologram_pdf": str(holo_pdf_path)}
 

@@ -6,6 +6,8 @@ title: LEAF_FINCH
 version: 1.0.0
 date-released: 2026-07-31
 license: MIT
+url: https://github.com/rkotynski/leaf_finch
+repository-code: https://github.com/rkotynski/leaf_finch
 authors:
   - family-names: Anand
     given-names: Vijayakumar
@@ -26,5 +28,5 @@ preferred-citation:
   journal: Optics Letters
   year: 2026
   notes: >-
-    Manuscript submitted to Optics Letters; provisionaly accepted. Bibliographic details
+    Manuscript submitted to Optics Letters; provisionally accepted. Bibliographic details
     may change.

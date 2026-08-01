@@ -6,12 +6,14 @@ The program includes a PyQt5 graphical interface, a command-line interface, CPU/
 
 Version: **1.0.0**
 
+Project homepage: [https://github.com/rkotynski/leaf_finch](https://github.com/rkotynski/leaf_finch)
+
 ## Features
 
 - Nonparaxial point-to-point Rayleigh-Sommerfeld scalar propagation between non-parallel planes.
 - Circular optimization target region in a plane with arbitrary direction and radius.
 - Binary DMD masks trained with a straight-through estimator.
-- Cosine, spherical-wave, Siemens-star, and deterministic Fresnel-Zone-Plate (FZP) targets. Cosine targets are used in the Opt. Lett. paper. FZP targets with Lee hologram encoding are included as a reference [V. Anand and R. Kotynski, “Experimental full-field Fresnel incoherent correlation holography using a digital micromirror device,” Appl. Opt. 65, 5479–5490 (2026)].
+- Cosine, spherical-wave, Siemens-star, and deterministic Fresnel-Zone-Plate (FZP) targets. Cosine targets are used in the Opt. Lett. paper. FZP targets with Lee hologram encoding are included as a reference [V. Anand and R. Kotyński, “Experimental full-field Fresnel incoherent correlation holography using a digital micromirror device,” Appl. Opt. 65, 5479–5490 (2026)].
 - CPU, NVIDIA CUDA, and AMD ROCm support through PyTorch.
 - `torch.float32` real tensors and `torch.complex64` optical fields in performance-critical paths.
 - Automatic source-pixel and reconstruction chunk selection from available memory.
@@ -27,7 +29,7 @@ Version: **1.0.0**
 - In superpixel methods [S. A. Goorden, J. Bertolotti, and A. P. Mosk, “Superpixel-based spatial amplitude and phase modulation using a digital micromirror device,” Opt. Express 22, 17999–18009 (2014)], the amplitude hologram is obtained from a complex field, as in Lee holography, whereas in our approach it is optimized directly. Direct optimization is considerably more computationally demanding; however, it does not produce aberrations at larger observation angles and enables target fields to be optimized with high angular resolution near the DMD’s specular-reflection angle, where the diffraction efficiency is highest.
  
 
-- The Python code assumes that the distance from the DMD center to the target center ((L)), the curvatures of the interfering waves at the target—characterized by the distance to the focus, equal to (2z_r)—and the target radius are specified for a setup without additional lenses, particularly without magnification. These parameters may be affected by the presence of Fourier lenses and a spatial filter between the DMD and the observation target.
+- The Python code assumes that the distance from the DMD center to the target center ($L$), the curvatures of the interfering waves at the target—characterized by the distance to the focus, equal to $2z_r$—and the target radius are specified for a setup without additional lenses, particularly without magnification. These parameters may be affected by the presence of Fourier lenses and a spatial filter between the DMD and the observation target.
 
 
 ## Documentation
@@ -43,26 +45,28 @@ The complete physical model, equations, algorithms, GUI workflow, configuration 
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="docs/assets/screenshots/main_window.png" alt="LEAF_FINCH Parameters tab screenshot placeholder"><br>
+<img src="docs/assets/screenshots/main_window.png" alt="LEAF_FINCH Parameters tab"><br>
 <em>Figure 1. Parameters tab: device selection, DMD geometry, target definition, optimization settings, and output controls.</em>
 </td>
 <td width="50%" align="center">
-<img src="docs/assets/screenshots/live_optimization.png" alt="LEAF_FINCH live optimization screenshot placeholder"><br>
-<em>Figure 2. Simulation tab  showing optimization progress, the textual log, and the three-panel plot of the total loss and its components..</em>
+<img src="docs/assets/screenshots/live_optimization.png" alt="LEAF_FINCH live optimization tab"><br>
+<em>Figure 2. Simulation tab showing optimization progress, the textual log, and the three-panel plot of the total loss and its components.</em>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-<img src="docs/assets/screenshots/results_browser.png" alt="LEAF_FINCH results browser screenshot placeholder"><br>
-<em>Figure 3. Generated binary masks encoding 3 phase-shifted DMD patterns.</em>
+<img src="docs/assets/screenshots/results_browser.png" alt="Generated LEAF_FINCH binary masks"><br>
+<em>Figure 3. Generated binary masks encoding three phase-shifted DMD patterns.</em>
 </td>
 <td width="50%" align="center">
-<img src="docs/assets/screenshots/results_reconstructed.png" alt="LEAF_FINCH checkpoint workflow screenshot placeholder"><br>
-<em>Figure 4. Reconstructed field (intensity and phase obtained at a circular off-axis target area; the phase-shifted target image together encode a complex-valued FINCH hologram).</em>
+<img src="docs/assets/screenshots/results_reconstructed.png" alt="Reconstructed LEAF_FINCH observation-plane fields"><br>
+<em>Figure 4. Reconstructed intensity and phase in the circular off-axis target area. The phase-shifted target images jointly encode a complex-valued FINCH hologram.</em>
 </td>
-<td width="50%" align="center">
-<img src="docs/assets/screenshots/finch_psf.png" alt="LEAF_FINCH checkpoint workflow screenshot placeholder"><br>
-<em>Figure 5. Reconstructed PSF of the complex FINCH hologram  (result of phase-shifted hologram reconstruction followed by Fresnel backpropagation).</em>
+</tr>
+<tr>
+<td colspan="2" align="center">
+<img src="docs/assets/screenshots/finch_psf.png" alt="Fresnel backward propagation of the LEAF_FINCH hologram"><br>
+<em>Figure 5. Reconstructed PSF of the complex FINCH hologram obtained by phase-shifted hologram reconstruction followed by Fresnel backward propagation.</em>
 </td>
 </tr>
 </table>
@@ -166,9 +170,9 @@ tests/                automated tests
 
 ## Citation
 
-The accompanying manuscript has been provisionaly accepted for Optics Letters.  Until final bibliographic data are available, cite it as:
+The accompanying manuscript has been provisionally accepted for Optics Letters. Until final bibliographic data are available, cite it as:
 
-> Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Optics Letters* (2026), (submitted).
+> Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Optics Letters* (2026) (submitted; provisionally accepted).
 
 A machine-readable citation is provided in [`CITATION.cff`](CITATION.cff), and a BibTeX entry is provided in [`CITATION.bib`](CITATION.bib).
 
@@ -178,7 +182,7 @@ Parts of the code and its documentation were developed with the assistance of la
 
 ## Acknowledgement
 
-Vijayakumar Anand acknowledges financial support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001) 
+Vijayakumar Anand acknowledges financial support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001).
 
 ## License
 

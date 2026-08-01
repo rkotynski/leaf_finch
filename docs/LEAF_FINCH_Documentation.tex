@@ -46,21 +46,24 @@
 \affil[$\dagger$]{University of Warsaw, Faculty of Physics, rafal.kotynski@fuw.edu.pl}
 
 %\email{rafal.kotynski@fuw.edu.pl}
-\date{Version 1.0 -- July 2026}
+\date{Version 1.0 -- August 2026}
 
 \begin{document}
 \maketitle
 \thispagestyle{empty}
 \vspace{10mm}
 \begin{abstract}
-\software{} is a PyTorch/PyQt5 application for designing binary amplitude masks displayed on a digital micromirror device (DMD). The masks are optimized by differentiating a discretized Rayleigh--Sommerfeld propagation model so that the calculated field in a circular region of an oblique observation plane has a strong projection onto a prescribed real-valued target target field (mode). The software supports CPU, NVIDIA CUDA, and AMD ROCm execution, automatic memory-aware chunk sizing, live convergence plots, observation-plane and Fresnel reconstruction, and resumable optimization checkpoints. This document specifies the physical model, target functions, loss function, numerical implementation, user interfaces, configuration, and output files.
+\software{} is a PyTorch/PyQt5 application for designing binary amplitude masks displayed on a digital micromirror device (DMD). The masks are optimized by differentiating a discretized Rayleigh--Sommerfeld propagation model so that the calculated field in a circular region of an oblique observation plane has a strong projection onto a prescribed real-valued target field (mode). The software supports CPU, NVIDIA CUDA, and AMD ROCm execution, automatic memory-aware chunk sizing, live convergence plots, observation-plane and Fresnel reconstruction, and resumable optimization checkpoints. This document specifies the physical model, target functions, loss function, numerical implementation, user interfaces, configuration, and output files.
 \end{abstract}
 
 \vfill
-\noindent\textbf{Associated manuscript (provisionaly accepted):}\\
-Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, ``Learned binary amplitude mask designs for Fresnel incoherent correlation holography,'' \emph{Optics Letters} (2026), (submitted).
+\noindent\textbf{Associated manuscript (provisionally accepted):}\\
+Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, ``Learned binary amplitude mask designs for Fresnel incoherent correlation holography,'' \emph{Optics Letters} (2026) (submitted; provisionally accepted).
 
 \vspace{5mm}
+\noindent\textbf{Project homepage:} \url{https://github.com/rkotynski/leaf_finch}
+
+\vspace{3mm}
 \noindent\textbf{License:} MIT License. See the repository file \texttt{LICENSE}.
 \clearpage
 \tableofcontents
@@ -72,7 +75,7 @@ Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, ``Learned binary amplitu
 The program is intended for numerical design and simulation. It does not directly control a physical DMD or camera. Its principal capabilities are:
 \begin{itemize}
   \item nonparaxial point-to-point scalar Rayleigh--Sommerfeld propagation; 
-  \item a circular optimization domain in an arbitrarily directed plane  (RS propagation prevents creating aberrations that would typically ocure for a simple and a lot faster Fresnel propagation);
+  \item a circular optimization domain in an arbitrarily directed plane  (RS propagation prevents creating aberrations that would typically occur for a simple and a lot faster Fresnel propagation);
   \item real-valued cosine, spherical-wave, and Siemens-star targets (cosine targets are used in the journal paper);
   \item deterministic two-lens Fresnel-zone-plate (FZP) mask generation;
   \item single-precision CPU, CUDA, and ROCm execution through PyTorch;
@@ -80,6 +83,15 @@ The program is intended for numerical design and simulation. It does not directl
   \item live loss monitoring, graceful stop, model save/load, and optimizer continuation;
   \item field, hologram, convergence, pattern, and metadata export.
 \end{itemize}
+
+\section{Relation to Lee holography and superpixel methods}
+In \software{}, the diffraction image is optimized directly at a selected angle and distance from the binary-amplitude DMD. This differs from Lee holography, where an amplitude hologram is encoded from an original complex field multiplied by a linear Lee carrier and subsequently projected onto the binary coding domain. Lee holography normally requires Fourier-plane spatial filtering to retain the selected diffraction order. Spatial filtering may also be useful with \software{} to isolate one of several DMD diffraction orders, but it is not required by the direct optimization method.
+
+The deterministic FZP target provides a Lee-encoded reference implementation related to V. Anand and R. Kotyński, ``Experimental full-field Fresnel incoherent correlation holography using a digital micromirror device,'' \emph{Applied Optics} \textbf{65}, 5479--5490 (2026). The cosine target is the mode used in the accompanying \emph{Optics Letters} manuscript.
+
+In superpixel methods, an amplitude mask is likewise derived from a desired complex field. By contrast, \software{} optimizes the binary mask directly through the propagation model. Direct optimization is substantially more computationally demanding, but the nonparaxial Rayleigh--Sommerfeld model avoids the angular aberrations associated with a simple Fresnel design at larger observation angles and permits high-angular-resolution optimization near the DMD specular-reflection direction, where diffraction efficiency is highest. A representative superpixel reference is \textit{ S. A. Goorden, J. Bertolotti, and A. P. Mosk, “Superpixel-based spatial amplitude and phase modulation using a digital micromirror device,” Opt. Express 22, 17999–18009 (2014).}
+
+The configuration parameters $L$, $2z_r$, and $R_{\mathrm{disk}}$ refer to a lens-free geometry without magnification: $L$ is the DMD-center-to-target-center distance, $2z_r$ characterizes the curvature separation of the interfering waves at the target, and $R_{\mathrm{disk}}$ is the target radius. Fourier lenses, spatial filters, and imaging magnification can change the effective interpretation of these parameters and must be included separately when mapping a laboratory system to the numerical model.
 
 \section{Software architecture}
 The numerical core is independent of the graphical interface. Both the GUI and the command-line interface call the same validated orchestration function, \texttt{run\_simulation()}.
@@ -430,7 +442,7 @@ The convolution is computed using zero-padded FFTs:
 \begin{equation}
  U_z=\mathcal F^{-1}\!\left\{\mathcal F(U_0)\mathcal F(h_z)\right\}\Delta x\Delta y.
 \end{equation}
-Positive and negative distances can be exported to inspect the two conjugate reconstruction directions.
+Positive and negative distances are exported as forward and backward propagation, respectively. The generated hologram PDF labels the corresponding intensity panels ``Fresnel forward propagation (Intensity)'' and ``Fresnel backward propagation (Intensity)''. Both intensity and phase panels use the local observation-plane coordinates $u$ and $v$ in millimetres.
 
 \section{Graphical user interface}
 The GUI is launched with \texttt{leaf-finch-gui} or \texttt{python run\_gui.py}. Its three tabs are summarized in \cref{tab:gui}.
@@ -458,36 +470,36 @@ When a model is loaded, \textbf{Continue optimizer state, history, and epoch cou
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{assets/screenshots/main_window.png}
-\caption{Parameters tab  showing device selection, DMD and observation geometry, target definition, optimization settings, reconstruction settings, and output controls.}
+\caption{Parameters tab showing device selection, DMD and observation geometry, target definition, optimization settings, reconstruction settings, and output controls.}
 \label{fig:gui-parameters}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{assets/screenshots/live_optimization.png}
-\caption{Simulation tab  showing optimization progress, the textual log, and the three-panel plot of the total loss and its components.}
+\caption{Simulation tab showing optimization progress, the textual log, and the three-panel plot of the total loss and its components.}
 \label{fig:gui-simulation}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{assets/screenshots/results_browser.png}
-\caption{Generated binary masks encoding 3 phase-shifted DMD patterns}
-\label{fig:gui-results}
+\caption{Generated binary masks encoding three phase-shifted DMD patterns.}
+\label{fig:gui-patterns}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{assets/screenshots/results_reconstructed.png}
-\caption{Reconstructed field (intensity and phase obtained at a circular off-axis target area; the phase-shifted target image together encode a complex-valued FINCH hologram)}
-\label{fig:gui-results}
+\caption{Reconstructed intensity and phase in the circular off-axis target area. The phase-shifted target images jointly encode a complex-valued FINCH hologram.}
+\label{fig:gui-reconstruction}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{assets/screenshots/finch_psf.png}
-\caption{Reconstructed PSF of the complex FINCH hologram  (result of phase-shifted hologram reconstruction followed by Fresnel backpropagation)}
-\label{fig:gui-results}
+\caption{Reconstructed PSF of the complex FINCH hologram obtained by phase-shifted hologram reconstruction followed by Fresnel backward propagation.}
+\label{fig:gui-psf}
 \end{figure}
 
 
@@ -500,7 +512,7 @@ leaf-finch --config examples/default_config.json
 leaf-finch --config config.json --model model_checkpoint.pt
 leaf-finch --config config.json --model model_checkpoint.pt --restart-from-weights
 \end{lstlisting}
-The module form \texttt{python -m leaf\_finch} and direct launcher \texttt{python run\_cli.py} are equivalent.
+The module form \texttt{python -m leaf\_finch} and direct launcher \texttt{python run\_cli.py} are equivalent. The project homepage, source code, issue tracker, and current documentation are available at \url{https://github.com/rkotynski/leaf_finch}.
 
 \section{Configuration reference}
 The JSON configuration contains the groups in \cref{tab:config}. Lengths are in metres and angles are in degrees unless indicated otherwise.
@@ -584,19 +596,29 @@ For reproducibility, preserve \texttt{config.json}, \texttt{run.json}, the check
 \section{Installation, tests, citation, and license}
 Install a platform-appropriate PyTorch build first, then install the repository:
 \begin{lstlisting}[language=bash]
+git clone https://github.com/rkotynski/leaf_finch.git
+cd leaf_finch
 python -m venv .venv
 source .venv/bin/activate
-# Install CPU/CUDA/ROCm PyTorch for this computer.
+# Install the appropriate CPU/CUDA/ROCm PyTorch build first.
 pip install -e .
 python -m pytest
 leaf-finch-gui
 \end{lstlisting}
-The repository includes a GitHub Actions workflow for CPU tests on supported Python versions.
+The repository includes a GitHub Actions workflow for CPU tests on supported Python versions. The project homepage is \url{https://github.com/rkotynski/leaf_finch}.
 
-If \software{} contributes to a publication, use the citation stored in \texttt{CITATION.cff} and \texttt{CITATION.bib}:
+The accompanying manuscript has been provisionally accepted for \emph{Optics Letters}. Until final bibliographic data are available, use the provisional citation stored in \texttt{CITATION.cff} and \texttt{CITATION.bib}:
 \begin{quote}
-Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, ``Learned binary amplitude mask designs for Fresnel incoherent correlation holography,'' \emph{Optics Letters} (2026).
+Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, ``Learned binary amplitude mask designs for Fresnel incoherent correlation holography,'' \emph{Optics Letters} (2026) (submitted; provisionally accepted).
 \end{quote}
-The software is distributed under the MIT License. The license permits use, modification, redistribution, sublicensing, and commercial use, subject to retention of the copyright and license notice. The software is provided without warranty.
+
+\subsection{Use of AI}
+Parts of the code and its documentation were developed with the assistance of large language model (LLM) tools.
+
+\subsection{Acknowledgement}
+Vijayakumar Anand acknowledges financial support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001).
+
+\subsection{License and contributions}
+\software{} is distributed under the MIT License. The license permits academic, commercial, and private use, modification, redistribution, and sublicensing, provided that the copyright and license notices are retained. The software is provided without warranty. Bug reports and contributions are welcome through the issue tracker and pull requests at \url{https://github.com/rkotynski/leaf_finch}.
 
 \end{document}
