@@ -1,6 +1,5 @@
 # LEAF-FINCH (Learned Engineering of Amplitude Fields for Fresnel Incoherent Correlation Holography)
 
-Project homepage: https://github.com/rkotynski/leaf_finch
 
 **LEAF-FINCH** designs binary-amplitude masks for a digital micromirror device (DMD) using differentiable Rayleigh–Sommerfeld propagation. The masks are optimized such that the complex field generated in an oblique observation plane that is not parallel to the DMD has a strong projection onto a prescribed real-valued target field. Three or more phase-shifted patterns are optimized jointly.
 
@@ -184,7 +183,7 @@ Parts of the code and its documentation were developed with the assistance of la
 
 ## Acknowledgement
 
-Vijayakumar Anand acknowledges financial support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001).
+Vijayakumar Anand acknowledges support from the NAWA ULAM project of the Polish National Agency for Academic Exchange (BPN/ULM/2025/1/00097/U/DRAFT/00001).
 
 ## License
 
