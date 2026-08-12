@@ -43,17 +43,18 @@ dependencies = [
   "psutil>=5.9",
 ]
 
-[project.urls]
-Homepage = "https://github.com/rkotynski/leaf_finch"
-Repository = "https://github.com/rkotynski/leaf_finch"
-Documentation = "https://github.com/rkotynski/leaf_finch/blob/main/docs/LEAF_FINCH_Documentation.pdf"
-Issues = "https://github.com/rkotynski/leaf_finch/issues"
-
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
   "build>=1.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/rkotynski/leaf_finch"
+Repository = "https://github.com/rkotynski/leaf_finch"
+Documentation = "https://github.com/rkotynski/leaf_finch/blob/main/docs/LEAF_FINCH_Documentation.pdf"
+Issues = "https://github.com/rkotynski/leaf_finch/issues"
+Paper = "https://doi.org/10.1364/OL.609636"
 
 [project.scripts]
 leaf-finch = "leaf_finch.cli:main"

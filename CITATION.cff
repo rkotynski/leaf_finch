@@ -1,10 +1,9 @@
 cff-version: 1.2.0
 message: >-
-  If you use LEAF_FINCH in research, please cite the accompanying manuscript.
-  The manuscript is not yet published, so its bibliographic details may change.
+  If you use LEAF_FINCH in research, please cite the accompanying Optics Letters article.
 title: LEAF_FINCH
 version: 1.0.0
-date-released: 2026-07-31
+date-released: 2026-08-12
 license: MIT
 url: https://github.com/rkotynski/leaf_finch
 repository-code: https://github.com/rkotynski/leaf_finch
@@ -27,6 +26,7 @@ preferred-citation:
       given-names: Rafał
   journal: Optics Letters
   year: 2026
+  doi: 10.1364/OL.609636
   notes: >-
-    Manuscript submitted to Optics Letters; provisionally accepted. Bibliographic details
-    may change.
+    Accepted for Optics Letters and posted 08/10/2026. Final volume, issue, and page
+    information are not yet available.

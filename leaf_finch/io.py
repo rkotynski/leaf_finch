@@ -242,14 +242,17 @@ def save_reconstruction(
             ax.set_xlabel("u (mm)")
             ax.set_ylabel("v (mm)")
         fig.tight_layout(); pdf.savefig(fig); plt.close(fig)
-        direction_names = {"plus": "forward", "minus": "backward"}
+        fresnel_titles = {
+            "plus": "Fresnel forward propagation",
+            "minus": "Fresnel backward propagation",
+        }
         for key, value in propagated.items():
-            direction = direction_names.get(key, key)
+            title = fresnel_titles.get(key, f"Fresnel {key} propagation")
             fig, axes = plt.subplots(1, 2, figsize=(9, 4))
             axes[0].imshow(np.abs(value) ** 2, origin="lower", extent=extent, cmap="inferno")
-            axes[0].set_title(f"Fresnel {direction} propagation (Intensity)")
+            axes[0].set_title(f"{title} (Intensity)")
             axes[1].imshow(np.angle(value), origin="lower", extent=extent, cmap="twilight", vmin=-np.pi, vmax=np.pi)
-            axes[1].set_title(f"Fresnel {direction} propagation (Phase)")
+            axes[1].set_title(f"{title} (Phase)")
             for ax in axes:
                 ax.set_xlabel("u (mm)")
                 ax.set_ylabel("v (mm)")

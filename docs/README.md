@@ -2,7 +2,7 @@
 
 Project homepage: https://github.com/rkotynski/leaf_finch
 
-Build the PDF from the repository root with:
+The PDF documentation is intentionally English-only. Build it from the repository root with:
 
 ```bash
 make docs
@@ -18,5 +18,4 @@ pdflatex -interaction=nonstopmode -halt-on-error LEAF_FINCH_Documentation.tex
 
 ## Replacing GUI screenshots
 
-The PDF and the repository README use the PNG files in `assets/screenshots/`. Replace the five screenshots while retaining the filenames. Rebuild the PDF with `make docs` after replacing them. See `assets/screenshots/README.md` for the expected content and recommended dimensions.
-
+The PDF and repository README use the PNG files in `assets/screenshots/`. The distributed screenshots intentionally show the default English interface. Replace them while retaining the filenames, then rebuild the PDF with `make docs`. See `assets/screenshots/README.md` for the expected content and recommended dimensions.

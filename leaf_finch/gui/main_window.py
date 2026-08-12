@@ -49,7 +49,8 @@ from ..config import (
     ReconstructionConfig,
     TargetConfig,
 )
-from ..training_state import checkpoint_summary, load_training_checkpoint
+from ..training_state import load_training_checkpoint
+from .i18n import LANGUAGES, tr, translate_runtime_message
 from .worker import SimulationWorker
 
 
@@ -88,16 +89,131 @@ class MainWindow(QMainWindow):
         self._loss_history: list[dict] = []
         self._loaded_checkpoint_history: list[dict] = []
         self._close_when_finished = False
+        self.language = "en"
+        self._text_bindings: list[tuple[object, str, str]] = []
+        self._combo_bindings: list[tuple[QComboBox, object, str]] = []
+        self._phase_key = "ready"
+        self._phase_args: dict[str, object] = {}
+        self._model_status_key = "model_auto_save"
+        self._model_status_args: dict[str, object] = {}
+        self._log_entries: list[tuple[str, str]] = []
 
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
         self.parameters_tab = self._build_parameters_tab()
         self.progress_tab = self._build_progress_tab()
         self.results_tab = self._build_results_tab()
-        self.tabs.addTab(self.parameters_tab, "Parameters")
-        self.tabs.addTab(self.progress_tab, "Simulation")
-        self.tabs.addTab(self.results_tab, "Results")
+        self.tabs.addTab(self.parameters_tab, "")
+        self.tabs.addTab(self.progress_tab, "")
+        self.tabs.addTab(self.results_tab, "")
+        self.retranslate_ui()
         self.apply_config(AppConfig())
+
+    def _t(self, key: str, **kwargs) -> str:
+        return tr(self.language, key, **kwargs)
+
+    def _bind_text(self, widget, method: str, key: str):
+        getattr(widget, method)(self._t(key))
+        self._text_bindings.append((widget, method, key))
+        return widget
+
+    def _group_box(self, key: str) -> QGroupBox:
+        return self._bind_text(QGroupBox(), "setTitle", key)
+
+    def _check_box(self, key: str) -> QCheckBox:
+        return self._bind_text(QCheckBox(), "setText", key)
+
+    def _button(self, key: str) -> QPushButton:
+        return self._bind_text(QPushButton(), "setText", key)
+
+    def _add_form_row(self, form: QFormLayout, key: str, field) -> None:
+        label = self._bind_text(QLabel(), "setText", key)
+        form.addRow(label, field)
+
+    def _add_combo_item(self, combo: QComboBox, key: str, data) -> None:
+        combo.addItem(self._t(key), data)
+        self._combo_bindings.append((combo, data, key))
+
+    def _set_phase(self, key: str, **kwargs) -> None:
+        self._phase_key = key
+        self._phase_args = dict(kwargs)
+        if hasattr(self, "phase_label"):
+            self.phase_label.setText(self._t(key, **kwargs))
+
+    def _set_model_status(self, key: str, **kwargs) -> None:
+        self._model_status_key = key
+        self._model_status_args = dict(kwargs)
+        if hasattr(self, "model_status"):
+            self.model_status.setText(self._t(key, **kwargs))
+
+    def _checkpoint_values(self, state: dict) -> dict[str, int]:
+        completed = int(state.get("completed_epochs", 0))
+        target = int(state.get("target_epochs", completed))
+        logits = state.get("logits")
+        if getattr(logits, "ndim", 0) == 2:
+            rows, cols = (int(v) for v in logits.shape)
+        else:
+            rows = cols = 0
+        return {"completed": completed, "target": target, "rows": rows, "cols": cols}
+
+    def _ask_yes_no(self, title_key: str, text_key: str) -> bool:
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle(self._t(title_key))
+        box.setText(self._t(text_key))
+        yes_button = box.addButton(self._t("yes"), QMessageBox.YesRole)
+        box.addButton(self._t("no"), QMessageBox.NoRole)
+        box.setDefaultButton(yes_button)
+        box.exec_()
+        return box.clickedButton() is yes_button
+
+    def _on_language_changed(self, _index: int = -1) -> None:
+        self.language = str(self.language_combo.currentData() or "en")
+        self.retranslate_ui()
+
+    def retranslate_ui(self) -> None:
+        if not hasattr(self, "tabs"):
+            return
+        self.tabs.setTabText(0, self._t("tab_parameters"))
+        self.tabs.setTabText(1, self._t("tab_simulation"))
+        self.tabs.setTabText(2, self._t("tab_results"))
+        for widget, method, key in self._text_bindings:
+            getattr(widget, method)(self._t(key))
+        for combo, data, key in self._combo_bindings:
+            index = combo.findData(data)
+            if index >= 0:
+                combo.setItemText(index, self._t(key))
+        if hasattr(self, "loss_axes_total"):
+            self.loss_axes_total.set_ylabel(self._t("plot_loss"))
+            self.loss_axes_components.set_ylabel(self._t("plot_weighted_component"))
+            self.loss_axes_binary.set_ylabel(self._t("plot_binary_penalty"))
+            self.loss_axes_binary.set_xlabel(self._t("plot_epoch"))
+            self.loss_axes_binary.set_title(self._t("plot_binary_title"), fontsize=9)
+            labels = {
+                "total_loss": "legend_total",
+                "data_loss": "legend_data",
+                "shape_loss_weighted": "legend_shape",
+                "mode_power_loss_weighted": "legend_mode",
+                "binarization_loss_weighted": "legend_binary_weighted",
+                "binarization_loss_unweighted": "legend_binary_raw",
+            }
+            for name, key in labels.items():
+                self.loss_lines[name].set_label(self._t(key))
+            for axis in self.loss_axes_all:
+                axis.legend(loc="best", fontsize=8)
+            self.loss_canvas.draw_idle()
+        self._set_phase(self._phase_key, **self._phase_args)
+        self._set_model_status(self._model_status_key, **self._model_status_args)
+        if hasattr(self, "_loss_history"):
+            self._redraw_loss_plot()
+        if hasattr(self, "log_view"):
+            self._render_log_history()
+        if hasattr(self, "file_list"):
+            current = self.file_list.currentItem()
+            if current is not None:
+                self.preview_selected_file(current)
+            elif hasattr(self, "image_preview"):
+                self.image_preview.setText(self._t("no_result_selected"))
 
     def _build_parameters_tab(self) -> QWidget:
         content = QWidget()
@@ -107,76 +223,82 @@ class MainWindow(QMainWindow):
         columns.addLayout(left, 1)
         columns.addLayout(right, 1)
 
-        backend_box = QGroupBox("Accelerator and memory")
+        backend_box = self._group_box("group_backend")
         backend_form = QFormLayout(backend_box)
         self.device_combo = QComboBox()
-        self.device_combo.addItem("Automatic", "auto")
+        self._add_combo_item(self.device_combo, "automatic", "auto")
         for info in list_accelerators():
             self.device_combo.addItem(info.label, info.device)
-        self.auto_batch = QCheckBox("Determine chunks from free memory")
+        self.language_combo = QComboBox()
+        for key, code in LANGUAGES:
+            self._add_combo_item(self.language_combo, key, code)
+        self.language_combo.setCurrentIndex(0)
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
+        self.auto_batch = self._check_box("determine_chunks")
         self.memory_fraction = double_spin(0.05, 0.95, 0.65, 2, 0.05)
         self.pixel_chunk = int_spin(64, 1_048_576, 32768, 1024)
-        backend_form.addRow("Device", self.device_combo)
-        backend_form.addRow("Automatic chunks", self.auto_batch)
-        backend_form.addRow("Usable memory fraction", self.memory_fraction)
-        backend_form.addRow("Manual optimization chunk", self.pixel_chunk)
+        self._add_form_row(backend_form, "interface_language", self.language_combo)
+        self._add_form_row(backend_form, "device", self.device_combo)
+        self._add_form_row(backend_form, "automatic_chunks", self.auto_batch)
+        self._add_form_row(backend_form, "usable_memory_fraction", self.memory_fraction)
+        self._add_form_row(backend_form, "manual_optimization_chunk", self.pixel_chunk)
         self.auto_batch.toggled.connect(lambda checked: self.pixel_chunk.setEnabled(not checked))
         left.addWidget(backend_box)
 
-        dmd_box = QGroupBox("DMD")
+        dmd_box = self._group_box("group_dmd")
         dmd_form = QFormLayout(dmd_box)
         self.nx = int_spin(8, 16384, 1024, 8)
         self.ny = int_spin(8, 16384, 768, 8)
         self.pitch_um = double_spin(0.01, 1000, 13.68, 6, 0.01, " µm")
         self.wavelength_nm = double_spin(1, 100000, 532, 4, 1, " nm")
-        self.use_aperture = QCheckBox("Use regular polygon aperture")
+        self.use_aperture = self._check_box("use_polygon_aperture")
         self.aperture_sides = int_spin(4, 256, 12, 2)
-        dmd_form.addRow("Width", self.nx)
-        dmd_form.addRow("Height", self.ny)
-        dmd_form.addRow("Pixel pitch", self.pitch_um)
-        dmd_form.addRow("Wavelength", self.wavelength_nm)
-        dmd_form.addRow("Aperture", self.use_aperture)
-        dmd_form.addRow("Polygon sides", self.aperture_sides)
+        self._add_form_row(dmd_form, "width", self.nx)
+        self._add_form_row(dmd_form, "height", self.ny)
+        self._add_form_row(dmd_form, "pixel_pitch", self.pitch_um)
+        self._add_form_row(dmd_form, "wavelength", self.wavelength_nm)
+        self._add_form_row(dmd_form, "aperture", self.use_aperture)
+        self._add_form_row(dmd_form, "polygon_sides", self.aperture_sides)
         left.addWidget(dmd_box)
 
-        plane_box = QGroupBox("Observation geometry")
+        plane_box = self._group_box("group_geometry")
         plane_form = QFormLayout(plane_box)
         self.distance = double_spin(1e-5, 1000, 0.275, 8, 0.005, " m")
         self.theta_x = double_spin(-89, 89, 15.0, 6, 0.1, "°")
         self.theta_y = double_spin(-89, 89, 16.4, 6, 0.1, "°")
         self.theta_ring = double_spin(1e-5, 45, 0.15, 6, 0.01, "°")
         self.zi = double_spin(-1e9, 1e9, 1000.0, 6, 1, " m")
-        self.plane_wave = QCheckBox("Plane wave (zi = ∞)")
+        self.plane_wave = self._check_box("plane_wave")
         self.plane_wave.toggled.connect(lambda checked: self.zi.setEnabled(not checked))
-        plane_form.addRow("Distance L", self.distance)
-        plane_form.addRow("θx", self.theta_x)
-        plane_form.addRow("θy", self.theta_y)
-        plane_form.addRow("Disk angular radius", self.theta_ring)
-        plane_form.addRow("Incident wavefront radius", self.zi)
-        plane_form.addRow("Incident field", self.plane_wave)
+        self._add_form_row(plane_form, "distance_l", self.distance)
+        self._add_form_row(plane_form, "theta_x", self.theta_x)
+        self._add_form_row(plane_form, "theta_y", self.theta_y)
+        self._add_form_row(plane_form, "disk_angular_radius", self.theta_ring)
+        self._add_form_row(plane_form, "incident_wavefront_radius", self.zi)
+        self._add_form_row(plane_form, "incident_field", self.plane_wave)
         left.addWidget(plane_box)
         left.addStretch(1)
 
-        target_box = QGroupBox("Target")
+        target_box = self._group_box("group_target")
         target_form = QFormLayout(target_box)
         self.target_type = QComboBox()
-        for text, value in (
-            ("Cosine / quadratic phase", "cosine"),
-            ("Spherical waves", "spherical"),
-            ("Deterministic two-lens FZP", "fzp"),
-            ("Rotated Siemens stars", "siemens"),
+        for key, value in (
+            ("target_cosine", "cosine"),
+            ("target_spherical", "spherical"),
+            ("target_fzp", "fzp"),
+            ("target_siemens", "siemens"),
         ):
-            self.target_type.addItem(text, value)
+            self._add_combo_item(self.target_type, key, value)
         self.distance_to_focus = double_spin(-100, 100, 0.025, 8, 0.001, " m")
         self.apodization = double_spin(0, 1, 0.15, 4, 0.01)
         self.siemens_spokes = int_spin(2, 2000, 36)
-        target_form.addRow("Type", self.target_type)
-        target_form.addRow("Distance to focus", self.distance_to_focus)
-        target_form.addRow("Edge apodization fraction", self.apodization)
-        target_form.addRow("Siemens spokes", self.siemens_spokes)
+        self._add_form_row(target_form, "type", self.target_type)
+        self._add_form_row(target_form, "distance_to_focus", self.distance_to_focus)
+        self._add_form_row(target_form, "edge_apodization_fraction", self.apodization)
+        self._add_form_row(target_form, "siemens_spokes", self.siemens_spokes)
         right.addWidget(target_box)
 
-        optim_box = QGroupBox("Optimization")
+        optim_box = self._group_box("group_optimization")
         optim_form = QFormLayout(optim_box)
         self.n_patterns = int_spin(3, 128, 3)
         self.n_steps = int_spin(1, 1_000_000, 1000, 100)
@@ -184,69 +306,70 @@ class MainWindow(QMainWindow):
         self.learning_rate = double_spin(1e-7, 10, 0.05, 7, 0.005)
         self.shape_weight = double_spin(0, 1000, 1.0, 6, 0.1)
         self.mode_power_weight = double_spin(0, 1000, 0.02, 6, 0.01)
-        self.jitter = QCheckBox("Randomize pixel positions each step")
+        self.jitter = self._check_box("randomize_pixels")
         self.jitter_fraction = double_spin(0, 0.5, 0.5, 3, 0.05)
         self.radial_sampling = double_spin(0, 1, 0.0, 3, 0.1)
         self.seed = int_spin(0, 2_147_483_647, 1)
-        optim_form.addRow("Number of patterns", self.n_patterns)
-        optim_form.addRow("Steps", self.n_steps)
-        optim_form.addRow("Points per step", self.points_per_step)
-        optim_form.addRow("Learning rate", self.learning_rate)
-        optim_form.addRow("Shape weight", self.shape_weight)
-        optim_form.addRow("Mode-power weight", self.mode_power_weight)
-        optim_form.addRow("Pixel jitter", self.jitter)
-        optim_form.addRow("Jitter half-range / pitch", self.jitter_fraction)
-        optim_form.addRow("Radial sampling f", self.radial_sampling)
-        optim_form.addRow("Random seed", self.seed)
+        self._add_form_row(optim_form, "number_of_patterns", self.n_patterns)
+        self._add_form_row(optim_form, "steps", self.n_steps)
+        self._add_form_row(optim_form, "points_per_step", self.points_per_step)
+        self._add_form_row(optim_form, "learning_rate", self.learning_rate)
+        self._add_form_row(optim_form, "shape_weight", self.shape_weight)
+        self._add_form_row(optim_form, "mode_power_weight", self.mode_power_weight)
+        self._add_form_row(optim_form, "pixel_jitter", self.jitter)
+        self._add_form_row(optim_form, "jitter_half_range", self.jitter_fraction)
+        self._add_form_row(optim_form, "radial_sampling_f", self.radial_sampling)
+        self._add_form_row(optim_form, "random_seed", self.seed)
         right.addWidget(optim_box)
 
-        model_box = QGroupBox("Model checkpoint")
+        model_box = self._group_box("group_checkpoint")
         model_layout = QVBoxLayout(model_box)
         model_row = QHBoxLayout()
         self.model_path = QLineEdit()
         self.model_path.setReadOnly(True)
-        self.model_path.setPlaceholderText("No model loaded; initialize random logits")
-        load_model_button = QPushButton("Load model…")
-        clear_model_button = QPushButton("Clear")
+        self._bind_text(self.model_path, "setPlaceholderText", "model_placeholder")
+        load_model_button = self._button("load_model")
+        clear_model_button = self._button("clear")
         load_model_button.clicked.connect(self.load_model_checkpoint)
         clear_model_button.clicked.connect(self.clear_model_checkpoint)
         model_row.addWidget(self.model_path, 1)
         model_row.addWidget(load_model_button)
         model_row.addWidget(clear_model_button)
-        self.resume_optimizer = QCheckBox("Continue optimizer state, history, and epoch counter")
+        self.resume_optimizer = self._check_box("resume_optimizer")
         self.resume_optimizer.setChecked(True)
-        self.model_status = QLabel("A completed or gracefully stopped run saves a portable .pt model automatically.")
+        self.model_status = QLabel()
+        self._set_model_status("model_auto_save")
         self.model_status.setWordWrap(True)
         model_layout.addLayout(model_row)
         model_layout.addWidget(self.resume_optimizer)
         model_layout.addWidget(self.model_status)
         right.addWidget(model_box)
 
-        recon_box = QGroupBox("Reconstruction")
+        recon_box = self._group_box("group_reconstruction")
         recon_form = QFormLayout(recon_box)
-        self.reconstruction_enabled = QCheckBox("Reconstruct observation plane")
+        self.reconstruction_enabled = self._check_box("reconstruct_plane")
         self.grid_size = int_spin(16, 4096, 300, 16)
         self.extent_factor = double_spin(0.1, 100, 1.25, 4, 0.05)
         self.fresnel_zr = double_spin(-100, 100, 0.0125, 8, 0.001, " m")
-        recon_form.addRow("Enabled", self.reconstruction_enabled)
-        recon_form.addRow("Grid size", self.grid_size)
-        recon_form.addRow("Extent / disk radius", self.extent_factor)
-        recon_form.addRow("Fresnel ±zr", self.fresnel_zr)
+        self._add_form_row(recon_form, "enabled", self.reconstruction_enabled)
+        self._add_form_row(recon_form, "grid_size", self.grid_size)
+        self._add_form_row(recon_form, "extent_disk_radius", self.extent_factor)
+        self._add_form_row(recon_form, "fresnel_zr", self.fresnel_zr)
         right.addWidget(recon_box)
 
-        output_box = QGroupBox("Output")
+        output_box = self._group_box("group_output")
         output_layout = QHBoxLayout(output_box)
         self.output_dir = QLineEdit("results")
-        browse_button = QPushButton("Browse…")
+        browse_button = self._button("browse")
         browse_button.clicked.connect(self.choose_output_dir)
         output_layout.addWidget(self.output_dir, 1)
         output_layout.addWidget(browse_button)
         right.addWidget(output_box)
 
         buttons = QHBoxLayout()
-        load_button = QPushButton("Load config…")
-        save_button = QPushButton("Save config…")
-        self.start_button = QPushButton("Start simulation")
+        load_button = self._button("load_config")
+        save_button = self._button("save_config")
+        self.start_button = self._button("start_simulation")
         self.start_button.setDefault(True)
         load_button.clicked.connect(self.load_config)
         save_button.clicked.connect(self.save_config)
@@ -269,10 +392,11 @@ class MainWindow(QMainWindow):
     def _build_progress_tab(self) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        self.phase_label = QLabel("Ready")
+        self.phase_label = QLabel()
+        self._set_phase("ready")
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 1000)
-        self.loss_value_label = QLabel("Loss components will appear after the first epoch.")
+        self.loss_value_label = QLabel(self._t("loss_wait"))
 
         self.loss_figure = Figure(figsize=(8, 6), tight_layout=True)
         self.loss_canvas = FigureCanvas(self.loss_figure)
@@ -290,13 +414,13 @@ class MainWindow(QMainWindow):
             self.loss_axes_binary,
         )
 
-        self.loss_axes_total.set_ylabel("loss")
-        self.loss_axes_components.set_ylabel("weighted component")
-        self.loss_axes_binary.set_ylabel("binary penalty")
-        self.loss_axes_binary.set_xlabel("epoch")
+        self.loss_axes_total.set_ylabel(self._t("plot_loss"))
+        self.loss_axes_components.set_ylabel(self._t("plot_weighted_component"))
+        self.loss_axes_binary.set_ylabel(self._t("plot_binary_penalty"))
+        self.loss_axes_binary.set_xlabel(self._t("plot_epoch"))
         self.loss_axes_binary.set_yscale("symlog", linthresh=1e-12)
         self.loss_axes_binary.set_title(
-            "Binary penalty on symmetric-log scale (exact zeros remain visible)",
+            self._t("plot_binary_title"),
             fontsize=9,
         )
         self.loss_axes_total.tick_params(labelbottom=False)
@@ -306,28 +430,28 @@ class MainWindow(QMainWindow):
 
         self.loss_lines = {}
         line, = self.loss_axes_total.plot(
-            [], [], label="total loss", linewidth=1.6, marker="o", markersize=2.5,
+            [], [], label=self._t("legend_total"), linewidth=1.6, marker="o", markersize=2.5,
             markevery=5, zorder=2,
         )
         self.loss_lines["total_loss"] = line
         line, = self.loss_axes_total.plot(
-            [], [], label="data loss", linestyle="--", linewidth=1.8, zorder=3,
+            [], [], label=self._t("legend_data"), linestyle="--", linewidth=1.8, zorder=3,
         )
         self.loss_lines["data_loss"] = line
         line, = self.loss_axes_components.plot(
-            [], [], label="weighted shape component", linewidth=1.5,
+            [], [], label=self._t("legend_shape"), linewidth=1.5,
         )
         self.loss_lines["shape_loss_weighted"] = line
         line, = self.loss_axes_components.plot(
-            [], [], label="weighted mode-power component", linewidth=1.5,
+            [], [], label=self._t("legend_mode"), linewidth=1.5,
         )
         self.loss_lines["mode_power_loss_weighted"] = line
         line, = self.loss_axes_binary.plot(
-            [], [], label="weighted binary component", linewidth=1.5,
+            [], [], label=self._t("legend_binary_weighted"), linewidth=1.5,
         )
         self.loss_lines["binarization_loss_weighted"] = line
         line, = self.loss_axes_binary.plot(
-            [], [], label="unweighted binary penalty", linestyle="--", linewidth=1.3,
+            [], [], label=self._t("legend_binary_raw"), linestyle="--", linewidth=1.3,
         )
         self.loss_lines["binarization_loss_unweighted"] = line
         for axis in self.loss_axes_all:
@@ -342,10 +466,10 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(1, 1)
 
         button_row = QHBoxLayout()
-        self.stop_epoch_button = QPushButton("Stop after current epoch")
+        self.stop_epoch_button = self._button("stop_after_epoch")
         self.stop_epoch_button.setEnabled(False)
         self.stop_epoch_button.clicked.connect(self.stop_after_current_epoch)
-        self.cancel_button = QPushButton("Cancel immediately")
+        self.cancel_button = self._button("cancel_immediately")
         self.cancel_button.setEnabled(False)
         self.cancel_button.clicked.connect(self.cancel_simulation)
         button_row.addStretch(1)
@@ -365,9 +489,9 @@ class MainWindow(QMainWindow):
         top = QHBoxLayout()
         self.results_path = QLineEdit()
         self.results_path.setReadOnly(True)
-        open_folder = QPushButton("Open folder")
+        open_folder = self._button("open_folder")
         open_folder.clicked.connect(self.open_results_folder)
-        self.save_model_button = QPushButton("Save model as…")
+        self.save_model_button = self._button("save_model_as")
         self.save_model_button.setEnabled(False)
         self.save_model_button.clicked.connect(self.save_last_model_as)
         top.addWidget(self.results_path, 1)
@@ -379,14 +503,14 @@ class MainWindow(QMainWindow):
         self.file_list.itemDoubleClicked.connect(lambda _: self.open_selected_file())
         preview_container = QWidget()
         preview_layout = QVBoxLayout(preview_container)
-        self.image_preview = QLabel("No result selected")
+        self.image_preview = QLabel(self._t("no_result_selected"))
         self.image_preview.setAlignment(Qt.AlignCenter)
         self.image_preview.setMinimumSize(400, 300)
         self.image_preview.setScaledContents(False)
         self.text_preview = QPlainTextEdit()
         self.text_preview.setReadOnly(True)
         self.text_preview.hide()
-        self.open_file_button = QPushButton("Open selected file")
+        self.open_file_button = self._button("open_selected_file")
         self.open_file_button.clicked.connect(self.open_selected_file)
         preview_layout.addWidget(self.image_preview, 1)
         preview_layout.addWidget(self.text_preview, 1)
@@ -501,65 +625,58 @@ class MainWindow(QMainWindow):
         self.output_dir.setText(config.output.base_dir)
 
     def choose_output_dir(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Select output directory", self.output_dir.text())
+        path = QFileDialog.getExistingDirectory(self, self._t("select_output_directory"), self.output_dir.text())
         if path:
             self.output_dir.setText(path)
 
     def load_config(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Load configuration", "", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, self._t("load_configuration"), "", "JSON (*.json)")
         if not path:
             return
         try:
             self.apply_config(AppConfig.load_json(path))
         except Exception as exc:
-            QMessageBox.critical(self, "Invalid configuration", str(exc))
+            QMessageBox.critical(self, self._t("invalid_configuration"), str(exc))
 
     def save_config(self) -> None:
         try:
             config = self.collect_config()
         except Exception as exc:
-            QMessageBox.critical(self, "Invalid configuration", str(exc))
+            QMessageBox.critical(self, self._t("invalid_configuration"), str(exc))
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Save configuration", "config.json", "JSON (*.json)")
+        path, _ = QFileDialog.getSaveFileName(self, self._t("save_configuration"), "config.json", "JSON (*.json)")
         if path:
             config.save_json(path)
 
     def load_model_checkpoint(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Load optimizer model",
+            self._t("load_optimizer_model"),
             "",
-            "LEAF_FINCH model (*.pt *.pth);;All files (*)",
+            self._t("model_filter"),
         )
         if not path:
             return
         try:
             state = load_training_checkpoint(path)
         except Exception as exc:
-            QMessageBox.critical(self, "Invalid model checkpoint", str(exc))
+            QMessageBox.critical(self, self._t("invalid_model_checkpoint"), str(exc))
             return
         self.loaded_model_path = Path(path)
         self.model_path.setText(path)
-        self.model_status.setText(f"Loaded {checkpoint_summary(state)}")
+        self._set_model_status("loaded_model", **self._checkpoint_values(state))
         self._loaded_checkpoint_history = [dict(row) for row in state.get("history", [])]
         self.resume_optimizer.setChecked(True)
         saved_config = state.get("config")
         if isinstance(saved_config, dict):
-            answer = QMessageBox.question(
-                self,
-                "Restore model configuration",
-                "Apply the simulation configuration stored with this model?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if answer == QMessageBox.Yes:
+            if self._ask_yes_no("restore_model_configuration", "restore_model_configuration_question"):
                 try:
                     self.apply_config(AppConfig.from_dict(saved_config))
                 except Exception as exc:
                     QMessageBox.warning(
                         self,
-                        "Configuration not restored",
-                        f"The model was loaded, but its saved configuration could not be applied:\n{exc}",
+                        self._t("configuration_not_restored"),
+                        self._t("configuration_not_restored_detail", error=exc),
                     )
         self._reset_loss_plot(
             self._loaded_checkpoint_history if self.resume_optimizer.isChecked() else []
@@ -568,20 +685,18 @@ class MainWindow(QMainWindow):
     def clear_model_checkpoint(self) -> None:
         self.loaded_model_path = None
         self.model_path.clear()
-        self.model_status.setText(
-            "A completed or gracefully stopped run saves a portable .pt model automatically."
-        )
+        self._set_model_status("model_auto_save")
         self._loaded_checkpoint_history = []
 
     def save_last_model_as(self) -> None:
         if self.last_model_path is None or not self.last_model_path.is_file():
-            QMessageBox.information(self, "No model", "The last run did not produce a model checkpoint.")
+            QMessageBox.information(self, self._t("no_model"), self._t("no_model_detail"))
             return
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Save model checkpoint",
+            self._t("save_model_checkpoint"),
             self.last_model_path.name,
-            "LEAF_FINCH model (*.pt)",
+            self._t("model_save_filter"),
         )
         if not path:
             return
@@ -591,9 +706,9 @@ class MainWindow(QMainWindow):
         try:
             shutil.copy2(self.last_model_path, destination)
         except Exception as exc:
-            QMessageBox.critical(self, "Could not save model", str(exc))
+            QMessageBox.critical(self, self._t("could_not_save_model"), str(exc))
             return
-        self.model_status.setText(f"Model copied to {destination}")
+        self._set_model_status("model_copied", path=destination)
 
     def _reset_loss_plot(self, history: list[dict] | None = None) -> None:
         self._loss_history = [dict(row) for row in (history or [])]
@@ -610,26 +725,30 @@ class MainWindow(QMainWindow):
         if self._loss_history:
             row = self._loss_history[-1]
             self.loss_value_label.setText(
-                f"Epoch {int(row.get('epoch', int(row.get('step', 0)) + 1))}: "
-                f"total={row.get('total_loss', math.nan):.5e}, "
-                f"data={row.get('data_loss', math.nan):.5e}, "
-                f"shape={row.get('shape_loss_weighted', math.nan):.5e}, "
-                f"mode={row.get('mode_power_loss_weighted', math.nan):.5e}, "
-                f"binary(w)={row.get('binarization_loss_weighted', math.nan):.5e}, "
-                f"binary(raw)={row.get('binarization_loss_unweighted', math.nan):.5e}"
+                self._t(
+                    "loss_summary",
+                    epoch=int(row.get("epoch", int(row.get("step", 0)) + 1)),
+                    total=row.get("total_loss", math.nan),
+                    data=row.get("data_loss", math.nan),
+                    shape=row.get("shape_loss_weighted", math.nan),
+                    mode=row.get("mode_power_loss_weighted", math.nan),
+                    binary_w=row.get("binarization_loss_weighted", math.nan),
+                    binary_raw=row.get("binarization_loss_unweighted", math.nan),
+                )
             )
         else:
-            self.loss_value_label.setText("Loss components will appear after the first epoch.")
+            self.loss_value_label.setText(self._t("loss_wait"))
 
     def start_simulation(self) -> None:
         try:
             config = self.collect_config()
         except Exception as exc:
-            QMessageBox.critical(self, "Invalid parameters", str(exc))
+            QMessageBox.critical(self, self._t("invalid_parameters"), str(exc))
             return
+        self._log_entries.clear()
         self.log_view.clear()
         self.progress_bar.setValue(0)
-        self.phase_label.setText("Starting…")
+        self._set_phase("starting")
         if self.loaded_model_path is not None and self.resume_optimizer.isChecked():
             self._reset_loss_plot(self._loaded_checkpoint_history)
         else:
@@ -662,19 +781,15 @@ class MainWindow(QMainWindow):
         if self.worker is not None:
             self.worker.stop_after_current_epoch()
             self.stop_epoch_button.setEnabled(False)
-            self.phase_label.setText("Stop requested; finishing current epoch…")
-            self.append_log(
-                "Graceful stop requested. The current epoch will finish, then the model and results will be saved."
-            )
+            self._set_phase("stop_requested")
+            self.append_log_key("graceful_stop_log")
 
     def cancel_simulation(self) -> None:
         if self.worker is not None:
             self.worker.cancel()
             self.cancel_button.setEnabled(False)
             self.stop_epoch_button.setEnabled(False)
-            self.append_log(
-                "Immediate cancellation requested; unlike graceful stop, this may not save the current model."
-            )
+            self.append_log_key("cancel_log")
 
     def on_progress(self, state: dict) -> None:
         phase = state.get("phase", "")
@@ -683,11 +798,12 @@ class MainWindow(QMainWindow):
             value = int(750 * fraction)
             epoch = state.get("epoch")
             target_epochs = state.get("target_epochs")
-            label = (
-                f"Optimizing binary patterns — epoch {epoch}/{target_epochs}"
-                if epoch is not None and target_epochs is not None
-                else "Optimizing binary patterns"
-            )
+            if epoch is not None and target_epochs is not None:
+                phase_key = "optimizing_epoch"
+                phase_args = {"epoch": epoch, "target": target_epochs}
+            else:
+                phase_key = "optimizing"
+                phase_args = {}
             if "total_loss" in state:
                 row = dict(state)
                 row_epoch = int(row.get("epoch", int(row.get("step", 0)) + 1))
@@ -702,32 +818,51 @@ class MainWindow(QMainWindow):
                 self._redraw_loss_plot()
         elif phase == "reconstruction":
             value = int(750 + 240 * fraction)
-            label = "Reconstructing the observation plane"
+            phase_key = "reconstructing"
+            phase_args = {}
             self.stop_epoch_button.setEnabled(False)
         elif phase == "finished":
             value = 1000
-            label = "Finished"
+            phase_key = "finished"
+            phase_args = {}
             self.stop_epoch_button.setEnabled(False)
         elif phase == "stopped":
             value = int(750 * fraction)
-            label = f"Stopped cleanly after epoch {state.get('completed_epochs', '')}"
+            phase_key = "stopped_after"
+            phase_args = {"epoch": state.get("completed_epochs", "")}
         else:
             value = int(1000 * fraction)
-            label = phase.title()
+            phase_key = "finished" if phase == "finished" else "ready"
+            phase_args = {}
         self.progress_bar.setValue(max(0, min(1000, value)))
-        self.phase_label.setText(label)
+        self._set_phase(phase_key, **phase_args)
+
+    def _render_log_history(self) -> None:
+        if not hasattr(self, "log_view"):
+            return
+        self.log_view.clear()
+        for kind, value in self._log_entries:
+            if kind == "key":
+                message = self._t(value)
+            else:
+                message = translate_runtime_message(value, self.language)
+            self.log_view.appendPlainText(message)
 
     def append_log(self, text: str) -> None:
-        self.log_view.appendPlainText(text)
+        self._log_entries.append(("runtime", text))
+        self.log_view.appendPlainText(translate_runtime_message(text, self.language))
+
+    def append_log_key(self, key: str) -> None:
+        self._log_entries.append(("key", key))
+        self.log_view.appendPlainText(self._t(key))
 
     def on_finished(self, summary: dict) -> None:
         stopped = bool(summary.get("stopped_early", False))
         self.progress_bar.setValue(750 if stopped else 1000)
-        self.phase_label.setText(
-            f"Stopped cleanly after epoch {summary.get('completed_epochs', 0)}; model saved"
-            if stopped
-            else "Finished"
-        )
+        if stopped:
+            self._set_phase("stopped_saved", epoch=summary.get("completed_epochs", 0))
+        else:
+            self._set_phase("finished")
         self.cancel_button.setEnabled(False)
         self.stop_epoch_button.setEnabled(False)
         self.last_output_dir = Path(summary["out_dir"])
@@ -737,22 +872,22 @@ class MainWindow(QMainWindow):
             self.last_model_path is not None and self.last_model_path.is_file()
         )
         if self.last_model_path is not None:
-            self.model_status.setText(f"Last saved model: {self.last_model_path}")
+            self._set_model_status("last_saved_model", path=self.last_model_path)
         self.populate_results(self.last_output_dir)
         self.tabs.setCurrentWidget(self.results_tab)
 
     def on_failed(self, traceback_text: str) -> None:
         self.append_log(traceback_text)
-        self.phase_label.setText("Failed")
+        self._set_phase("failed")
         self.cancel_button.setEnabled(False)
         self.stop_epoch_button.setEnabled(False)
-        QMessageBox.critical(self, "Simulation failed", traceback_text.splitlines()[-1])
+        QMessageBox.critical(self, self._t("simulation_failed"), traceback_text.splitlines()[-1])
 
     def on_cancelled(self) -> None:
-        self.phase_label.setText("Cancelled")
+        self._set_phase("cancelled")
         self.cancel_button.setEnabled(False)
         self.stop_epoch_button.setEnabled(False)
-        self.append_log("Simulation cancelled.")
+        self.append_log_key("simulation_cancelled")
 
     def _cleanup_worker(self) -> None:
         if self.worker is not None:
@@ -804,7 +939,7 @@ class MainWindow(QMainWindow):
         else:
             self.text_preview.hide(); self.image_preview.show()
             self.image_preview.setPixmap(QPixmap())
-            self.image_preview.setText(f"No built-in preview for {path.suffix or 'this file'}\nDouble-click to open it.")
+            self.image_preview.setText(self._t("no_preview", suffix=path.suffix or self._t("this_file")))
 
     def open_selected_file(self) -> None:
         item = self.file_list.currentItem()
@@ -817,13 +952,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         if self.worker is not None:
-            answer = QMessageBox.question(
-                self,
-                "Simulation running",
-                "Cancel the simulation and close after the worker stops?",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            if answer != QMessageBox.Yes:
+            if not self._ask_yes_no("simulation_running", "close_running_question"):
                 event.ignore()
                 return
             self._close_when_finished = True

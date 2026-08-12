@@ -287,3 +287,13 @@ def test_reconstruction_outputs_float32_on_cpu():
     assert reconstruction["phase"].dtype == torch.float32
     assert reconstruction["intensity"].device.type == "cpu"
     assert reconstruction["phase"].device.type == "cpu"
+
+
+def test_gui_translation_catalog_and_runtime_messages():
+    from leaf_finch.gui.i18n import tr, translate_runtime_message
+
+    assert tr("en", "start_simulation") == "Start simulation"
+    assert tr("pl", "start_simulation") == "Uruchom symulację"
+    assert tr("pl", "tab_results") == "Wyniki"
+    assert "Używane urządzenie" in translate_runtime_message("Using CUDA 0: test GPU", "pl")
+    assert translate_runtime_message("Using CUDA 0: test GPU", "en") == "Using CUDA 0: test GPU"
