@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 import threading
 from collections.abc import Callable
@@ -193,7 +194,17 @@ def optimize_patterns(
         saved_chunk = resume_state.get("pixel_chunk")
         if isinstance(saved_chunk, int) and saved_chunk > 0 and not config.backend.auto_batch:
             pixel_chunk = min(n_pixels, saved_chunk)
-    _emit_log(log_callback, f"Optimization pixel chunk: {pixel_chunk:,} active DMD pixels")
+    total_dmd_pixels = int(dmd.nx * dmd.ny)
+    active_fraction = 100.0 * float(n_pixels) / max(1, total_dmd_pixels)
+    chunks_per_epoch = math.ceil(n_pixels / max(1, pixel_chunk))
+    _emit_log(
+        log_callback,
+        f"Active DMD pixels: {n_pixels:,} / {total_dmd_pixels:,} ({active_fraction:.1f}%)",
+    )
+    _emit_log(
+        log_callback,
+        f"Propagation pixel chunk: {pixel_chunk:,} pixels; chunks per epoch: {chunks_per_epoch:,}",
+    )
 
     run_start = time.perf_counter()
     pattern_ids = torch.arange(opt.n_patterns, device=device)
