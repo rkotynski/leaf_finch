@@ -58,6 +58,12 @@ Kod przyjmuje, że odległość od środka DMD do środka obszaru docelowego `L`
 
 Pełny opis modelu fizycznego, równań i algorytmów pozostaje w angielskiej dokumentacji PDF. Screenshoty programu są również utrzymywane w wersji angielskiej.
 
+### Cytowanie
+
+Artykuł opisujący metodę został opublikowany w *Optics Letters*:
+
+> Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Opt. Lett.* **51**, 4825–4828 (2026), <https://doi.org/10.1364/OL.609636>.
+
 ## Documentation
 
 The complete physical model, equations, algorithms, GUI workflow, configuration reference, and output format are described in:
@@ -196,9 +202,9 @@ tests/                automated tests
 
 ## Citation
 
-The accompanying article has been accepted for *Optics Letters* and has a DOI, while final volume/issue/page data are not yet available. Please cite the current posted version as:
+The accompanying article is published in *Optics Letters*. Please cite it as:
 
-> Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography”, *Optics Letters* (posted 08/10/2026), doi: 10.1364/OL.609636.
+> Vijayakumar Anand, Rafał Stojek, and Rafał Kotyński, “Learned binary amplitude mask designs for Fresnel incoherent correlation holography,” *Opt. Lett.* **51**, 4825–4828 (2026), <https://doi.org/10.1364/OL.609636>.
 
 DOI: <https://doi.org/10.1364/OL.609636>
 

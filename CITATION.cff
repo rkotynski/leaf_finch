@@ -25,8 +25,9 @@ preferred-citation:
     - family-names: Kotyński
       given-names: Rafał
   journal: Optics Letters
+  volume: '51'
+  start: '4825'
+  end: '4828'
   year: 2026
   doi: 10.1364/OL.609636
-  notes: >-
-    Accepted for Optics Letters and posted 08/10/2026. Final volume, issue, and page
-    information are not yet available.
+  url: https://doi.org/10.1364/OL.609636
